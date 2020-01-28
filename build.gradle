@@ -1,0 +1,138 @@
+assert System.getProperty('java.specification.version') == '1.8'
+System.setProperty('file.encoding', 'utf-8')
+
+buildscript {
+
+	ext {
+		spring_boot = '2.2.4.RELEASE'
+	}
+
+	repositories {
+		maven {
+			url "https://plugins.gradle.org/m2/"
+		}
+		// Add your custom (e.g. inhouse Enterprise repositories here)
+//		maven { url 'https://bank-gradle-plugin-repo/' }
+	}
+
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${spring_boot}")
+
+	}
+
+	configurations.classpath.resolutionStrategy {
+		cacheChangingModulesFor 0, 'seconds'
+		failOnVersionConflict()
+	}
+
+}
+
+apply plugin: 'java'  // this adds several dev convenient Gradle tasks: https://docs.gradle.org/current/userguide/java_plugin.html
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+group = 'com.oklimenko'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+repositories {
+	mavenCentral()
+	// add your enterprise repositories here
+	//		maven { url 'https://bank-gradle-plugin-repo/' }
+}
+
+
+///////////
+///////////
+///////////
+
+
+apply plugin: 'idea'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+allprojects {
+
+	repositories {
+		// add you Enterprise repos
+		maven { url 'https://nexus.***/public/' }
+//        maven { url "https://repo.spring.io/milestone" }
+//        maven { url "https://maven.google.com" }
+		mavenCentral()
+	}
+
+	ext.versions = [:]
+	ext.libs = [:]
+
+	ext['springCloudVersion'] = 'Hoxton.RELEASE'
+	versions.spring_boot = ext.springBootVersion  // defined in buildscript
+	versions.swagger2 = "2.9.2"
+	versions.logstash_gelf = "1.13.0"
+	versions.hamcrest = "1.3"
+
+	libs.spring_boot = [
+			libs.spring_boot_starter = "org.springframework.boot:spring-boot-starter:${versions.spring_boot}",
+			libs.spring_boot_starter_data = "org.springframework.boot:spring-boot-starter-data-jpa:${versions.spring_boot}",
+			libs.spring_boot_starter_actuator = "org.springframework.boot:spring-boot-starter-actuator:${versions.spring_boot}"
+	]
+	libs.spring_boot_test = [
+			libs.spring_boot_starter_test = "org.springframework.boot:spring-boot-starter-test:${versions.spring_boot}"
+	]
+
+	libs.gelf = [
+			libs.logback_gelf = "biz.paluch.logging:logstash-gelf:${versions.logstash_gelf}"
+	]
+
+	libs.logging_compile = [
+			libs.gelf
+	]
+
+	libs.hamcrest = [
+			libs.hamcrest_core = "org.hamcrest:hamcrest-core:${versions.hamcrest}",
+			libs.hamcrest_library = "org.hamcrest:hamcrest-library:${versions.hamcrest}",
+	]
+	libs.hamcrest_all = "org.hamcrest:hamcrest-all:${versions.hamcrest}"
+
+	libs.test = [
+			libs.hamcrest_core,
+			libs.hamcrest_library
+	]
+
+	// database libraries
+	libs.h2database = "com.h2database:h2:1.4.197" // TODO ???
+
+	// swagger2
+	libs.swagger2 = [
+			libs.swagger2_core = "io.springfox:springfox-swagger2:${versions.swagger2}",
+			libs.swagger2_ui = "io.springfox:springfox-swagger-ui:${versions.swagger2}",
+	]
+}
+
+subprojects {
+	ext {
+		lombokVersion = "1.18.0"
+		mapstructVersion = "1.2.0.Final"
+		swaggerCodegenVersion = "2.4.2"
+	}
+
+	sourceCompatibility = 1.8
+	targetCompatibility = 1.8
+
+	task allDeps(type: DependencyReportTask) {}
+}
+
+///////////
+///////////
+///////////
+///////////
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine' // No need in JUnit 4 for new projects.
+	}
+}
+
+test {
+	useJUnitPlatform()
+}
