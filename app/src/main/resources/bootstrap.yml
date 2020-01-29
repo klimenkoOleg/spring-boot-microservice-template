@@ -1,0 +1,8 @@
+sampleapp:
+  documentaion-url: https://link-to-your-confluence-requirements
+spring:
+  application.name: sampleapp
+  cloud.config:
+    uri: ${CONFIG_URI:http://localhost:8080}
+    label:  sampleapp
+

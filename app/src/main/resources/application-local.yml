@@ -1,0 +1,32 @@
+# usually "local" profile is used to run the app from developer's machine, connect to test database and check how it's going on.
+logging:
+  level:
+    root: INFO
+    com.oklimenko: DEBUG
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=test
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQL95Dialect
+        hbm2ddl.auto: validate
+        show_sql: true
+        format_sql: true
+  flyway:
+    enabled: true
+    schemas: test
+    url: jdbc:postgresql://localhost:5432/postgres
+    user: postgres
+    password: postgres
+
+sampleapp-app:
+  tracing:
+    sampler:
+      #    Probability of requests that should be sampled. E.g. 1.0 - 100% requests should be
+      #    sampled. The precision is whole-numbers only (i.e. there's no support for 0.1% of
+      #    the traces). If not specified, default value is 0.1 - 10%
+      probability: 1

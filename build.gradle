@@ -3,9 +3,8 @@ System.setProperty('file.encoding', 'utf-8')
 
 buildscript {
 
-	ext {
-		spring_boot = '2.2.4.RELEASE'
-	}
+	ext.springBootVersion = '2.2.4.RELEASE'
+	ext.javaVersion = '1.8'
 
 	repositories {
 		maven {
@@ -16,24 +15,29 @@ buildscript {
 	}
 
 	dependencies {
-		classpath("org.springframework.boot:spring-boot-gradle-plugin:${spring_boot}")
-
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
 	}
 
 	configurations.classpath.resolutionStrategy {
 		cacheChangingModulesFor 0, 'seconds'
 		failOnVersionConflict()
 	}
-
 }
 
+apply plugin: 'idea'
 apply plugin: 'java'  // this adds several dev convenient Gradle tasks: https://docs.gradle.org/current/userguide/java_plugin.html
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
-group = 'com.oklimenko'
+group = 'com.oklimenko.sampleapp'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '1.8'
+
+
+bootJar {
+	archiveFileName = "${archiveBaseName.get()}.${version}.${archiveExtension.get()}"
+	mainClassName = 'com.oklimenko.sampleapp.SampleApplication'
+}
 
 repositories {
 	mavenCentral()
@@ -41,23 +45,22 @@ repositories {
 	//		maven { url 'https://bank-gradle-plugin-repo/' }
 }
 
-
-///////////
-///////////
-///////////
-
-
-apply plugin: 'idea'
-apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
 
 allprojects {
 
+	apply plugin: 'java'
+
+	sourceCompatibility = "${javaVersion}"
+	targetCompatibility = "${javaVersion}"
+
 	repositories {
 		// add you Enterprise repos
-		maven { url 'https://nexus.***/public/' }
-//        maven { url "https://repo.spring.io/milestone" }
-//        maven { url "https://maven.google.com" }
+//		maven { url 'https://nexus.***/public/' }
 		mavenCentral()
 	}
 
@@ -65,25 +68,42 @@ allprojects {
 	ext.libs = [:]
 
 	ext['springCloudVersion'] = 'Hoxton.RELEASE'
-	versions.spring_boot = ext.springBootVersion  // defined in buildscript
+	versions.spring_boot = "${springBootVersion}"  // defined in buildscript section above
+
 	versions.swagger2 = "2.9.2"
 	versions.logstash_gelf = "1.13.0"
 	versions.hamcrest = "1.3"
+	versions.slf4j = "1.7.25"
+	versions.h2 = "1.4.197"
 
 	libs.spring_boot = [
 			libs.spring_boot_starter = "org.springframework.boot:spring-boot-starter:${versions.spring_boot}",
 			libs.spring_boot_starter_data = "org.springframework.boot:spring-boot-starter-data-jpa:${versions.spring_boot}",
 			libs.spring_boot_starter_actuator = "org.springframework.boot:spring-boot-starter-actuator:${versions.spring_boot}"
 	]
+
 	libs.spring_boot_test = [
 			libs.spring_boot_starter_test = "org.springframework.boot:spring-boot-starter-test:${versions.spring_boot}"
+	]
+
+	libs.slf4j = [
+			libs.slf4j_api = "org.slf4j:slf4j-api:${versions.slf4j}",
+			"org.slf4j:jul-to-slf4j:${versions.slf4j}",
+			"org.slf4j:jcl-over-slf4j:${versions.slf4j}",
+			"org.slf4j:log4j-over-slf4j:${versions.slf4j}",
+	]
+
+	// swagger2
+	libs.swagger2 = [
+			libs.swagger2_core = "io.springfox:springfox-swagger2:${versions.swagger2}",
+			libs.swagger2_ui = "io.springfox:springfox-swagger-ui:${versions.swagger2}",
 	]
 
 	libs.gelf = [
 			libs.logback_gelf = "biz.paluch.logging:logstash-gelf:${versions.logstash_gelf}"
 	]
 
-	libs.logging_compile = [
+	libs.logging_distributed = [
 			libs.gelf
 	]
 
@@ -93,13 +113,13 @@ allprojects {
 	]
 	libs.hamcrest_all = "org.hamcrest:hamcrest-all:${versions.hamcrest}"
 
-	libs.test = [
+	libs.hamcrest = [
 			libs.hamcrest_core,
 			libs.hamcrest_library
 	]
 
 	// database libraries
-	libs.h2database = "com.h2database:h2:1.4.197" // TODO ???
+	libs.h2database = "com.h2database:h2:${versions.h2}"
 
 	// swagger2
 	libs.swagger2 = [
@@ -110,21 +130,14 @@ allprojects {
 
 subprojects {
 	ext {
-		lombokVersion = "1.18.0"
 		mapstructVersion = "1.2.0.Final"
-		swaggerCodegenVersion = "2.4.2"
 	}
 
-	sourceCompatibility = 1.8
-	targetCompatibility = 1.8
+	[compileJava, compileTestJava]*.options*.encoding = 'utf-8'
 
+	// apply plugin: 'checkstyle'
 	task allDeps(type: DependencyReportTask) {}
 }
-
-///////////
-///////////
-///////////
-///////////
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
